@@ -1,19 +1,22 @@
+from functools import lru_cache
+from pathlib import Path
+
+
+DICTIONARY_PATH = Path(__file__).resolve().parent.parent / "data" / "rockyou.txt"
+
+
+@lru_cache(maxsize=1)
 def load_dictionary():
+    if not DICTIONARY_PATH.exists():
+        return set()
 
-    weak_passwords = set()
+    with DICTIONARY_PATH.open("r", encoding="latin-1", errors="ignore") as file:
+        return {line.strip() for line in file if line.strip()}
 
-    try:
-        with open("D:/Password Analyzer Z+ 1.3.7/data/rockyou.txt", "r", encoding="latin-1") as file:
-            for line in file:
-                weak_passwords.add(line.strip())
-    except FileNotFoundError:
-        print("Файл rockyou.txt не найден")
 
-    return weak_passwords
+def dictionary_available():
+    return DICTIONARY_PATH.exists()
 
 
 def check_weak_password(password):
-
-    weak_passwords = load_dictionary()
-
-    return password in weak_passwords
+    return password in load_dictionary()

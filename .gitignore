@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.lnk
+.venv/
+venv/
+.env
+*.zip
+build/
+dist/
+data/rockyou.txt

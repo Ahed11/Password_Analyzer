@@ -1,45 +1,62 @@
 import math
 
-def calculate_bruteforce_time(password, analysis):
 
-    charset_size = 0
+ATTACK_SCENARIOS = {
+    "online_rate_limited": ("Online attack (rate limiting)", 10),
+    "offline_cpu": ("Offline CPU", 100_000_000),
+    "offline_gpu": ("Offline GPU", 100_000_000_000),
+}
 
+
+def _charset_size(analysis):
+    size = 0
+    if analysis["is_passphrase"]:
+        return 7776
     if analysis["lowercase"]:
-        charset_size += 26
-
+        size += 26
     if analysis["uppercase"]:
-        charset_size += 26
-
+        size += 26
     if analysis["digits"]:
-        charset_size += 10
-
+        size += 10
     if analysis["special"]:
-        charset_size += 32
+        size += 32
+    return size
 
+
+def calculate_bruteforce_time(password, analysis):
+    charset_size = _charset_size(analysis)
     length = len(password)
 
-    combinations = charset_size ** length
+    if analysis["is_passphrase"]:
+        length = len([part for part in password.replace("_", " ").replace("-", " ").split() if part])
 
-    attempts_per_second = 1_000_000_000  # 1 миллиард попыток
+    if charset_size == 0 or length == 0:
+        return {}
 
-    seconds = combinations / attempts_per_second
+    combinations = math.pow(charset_size, length)
+    return {
+        scenario_key: combinations / attempts_per_second
+        for scenario_key, (_, attempts_per_second) in ATTACK_SCENARIOS.items()
+    }
 
-    return seconds
 
 def format_time(seconds):
+    if seconds < 1:
+        return "< 1 секунды"
 
     minutes = seconds / 60
     hours = minutes / 60
     days = hours / 24
     years = days / 365
 
+    if years >= 1_000_000_000:
+        return f"{years:.2e} лет"
     if years >= 1:
         return f"{years:.2f} лет"
-    elif days >= 1:
+    if days >= 1:
         return f"{days:.2f} дней"
-    elif hours >= 1:
+    if hours >= 1:
         return f"{hours:.2f} часов"
-    elif minutes >= 1:
+    if minutes >= 1:
         return f"{minutes:.2f} минут"
-    else:
-        return f"{seconds:.2f} секунд"
+    return f"{seconds:.2f} секунд"
